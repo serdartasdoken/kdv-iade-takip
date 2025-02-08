@@ -168,7 +168,6 @@ def calculate_monthly_stats(year, month):
     else:
         end_date = datetime(year, month + 1, 1)
     
-    # SQLite için julianday fonksiyonu yerine SQLAlchemy'nin datetime işlemlerini kullanalım
     stats = {
         'toplam_iade': db.session.query(func.sum(Dosya.iade_tutari)).filter(
             Dosya.acilis_tarihi >= start_date,
@@ -180,7 +179,8 @@ def calculate_monthly_stats(year, month):
         ).count(),
         'ortalama_sure': db.session.query(
             func.avg(
-                func.extract('epoch', Dosya.son_islem_tarihi - Dosya.acilis_tarihi) / 86400
+                # PostgreSQL için date_part kullanıyoruz
+                func.date_part('day', Dosya.son_islem_tarihi - Dosya.acilis_tarihi)
             )
         ).filter(
             Dosya.acilis_tarihi >= start_date,
