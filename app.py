@@ -180,7 +180,8 @@ def calculate_monthly_stats(year, month):
         'ortalama_sure': db.session.query(
             func.avg(
                 # Veritabanı tipine göre uygun fonksiyonu kullan
-                func.extract('epoch', Dosya.son_islem_tarihi - Dosya.acilis_tarihi) / 86400 \
+                (func.date_part('day', Dosya.son_islem_tarihi - Dosya.acilis_tarihi) + \
+                func.date_part('hour', Dosya.son_islem_tarihi - Dosya.acilis_tarihi) / 24.0) \
                 if str(db.engine.url).startswith('postgresql') \
                 else (func.julianday(Dosya.son_islem_tarihi) - func.julianday(Dosya.acilis_tarihi))
             )
