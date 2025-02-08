@@ -724,16 +724,15 @@ def upload_file_to_s3(file, bucket_name, object_name=None):
 if __name__ == '__main__':
     import os
     
-    # Eski veritabanını yedekle
-    if os.path.exists('instance/kdv_iade.db'):
-        import shutil
-        shutil.copy2('instance/kdv_iade.db', 'instance/kdv_iade.db.bak')
-    
-    # Yeni veritabanını oluştur
     with app.app_context():
+        # Veritabanı tablolarını oluştur
         db.create_all()
         
-        # Admin kullanıcısı kontrolü...
+        # Migrations'ı uygula
+        from flask_migrate import upgrade as _upgrade
+        _upgrade()
+        
+        # Admin kullanıcısı kontrolü
         admin_user = User.query.filter_by(username='admin').first()
         if not admin_user:
             admin = User(username='admin', is_admin=True)

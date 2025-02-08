@@ -1,7 +1,6 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.so
 .Python
 env/
@@ -27,10 +26,8 @@ ENV/
 # SQLite database
 *.db
 
-# Elastic Beanstalk Files
-.elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
+# Environment variables
+.env
 
 # Uploaded files
 uploads/*
@@ -42,8 +39,5 @@ uploads/*
 *.swp
 *.swo
 
-# Environment variables
-.env
-
-# New added code
+# Instance folder
 instance/

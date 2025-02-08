@@ -1,0 +1,19 @@
+branch-defaults:
+  default:
+    environment: Kdv-iade-env
+environment-defaults:
+  Kdv-iade-env:
+    branch: null
+    repository: null
+global:
+  application_name: kdv-iade
+  default_ec2_keyname: null
+  default_platform: Python 3.8
+  default_region: eu-central-1
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: null
+  sc: null
+  workspace_type: Application
