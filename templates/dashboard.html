@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Aylık Özet Kartları -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Aylık Toplam İade</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">₺{{ "{:,.2f}".format(monthly_stats.toplam_iade) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Aylık Dosya Sayısı</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ monthly_stats.dosya_sayisi }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Ortalama İşlem Süresi</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ "{:.1f}".format(monthly_stats.ortalama_sure) }} gün</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Yıllık Toplam İade</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">₺{{ "{:,.2f}".format(yearly_stats.toplam_iade) }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Aylık İade Grafiği -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Aylık İade Tutarları</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- En Yüksek İade Tutarlı Firmalar -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">En Yüksek İade Tutarlı Firmalar</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Firma</th>
+                                    <th>Toplam İade</th>
+                                    <th>Detay</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for company in top_companies %}
+                                <tr>
+                                    <td>{{ company.firma_adi }}</td>
+                                    <td>₺{{ "{:,.2f}".format(company.toplam_iade) }}</td>
+                                    <td>
+                                        <a href="{{ url_for('firma_performans', vergi_no=company.vergi_no) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-chart-line"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Süreç tablosu için yeni bir bölüm -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Süreç Takibi</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Firma Adı</th>
+                                    <th>Vergi No</th>
+                                    <th>Dönem</th>
+                                    <th>Kayıt-Karşıt Liste (Gün)</th>
+                                    <th>Karşıt Liste-Rapor (Gün)</th>
+                                    <th>Rapor-İade Talep (Gün)</th>
+                                    <th>Eksiklik 1 (Gün)</th>
+                                    <th>Eksiklik 2 (Gün)</th>
+                                    <th>Eksiklik 3 (Gün)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for surec in surecler %}
+                                <tr>
+                                    <td>{{ surec.firma_adi }}</td>
+                                    <td>{{ surec.vergi_no }}</td>
+                                    <td>{{ surec.donem }}</td>
+                                    <td>{{ surec.gun_farklari.get('kayit_karsit', '-') }}</td>
+                                    <td>{{ surec.gun_farklari.get('karsit_rapor', '-') }}</td>
+                                    <td>{{ surec.gun_farklari.get('rapor_iade', '-') }}</td>
+                                    <td>{{ surec.gun_farklari.get('eksiklik_1', '-') }}</td>
+                                    <td>{{ surec.gun_farklari.get('eksiklik_2', '-') }}</td>
+                                    <td>{{ surec.gun_farklari.get('eksiklik_3', '-') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+var ctx = document.getElementById('monthlyChart').getContext('2d');
+var monthlyChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'],
+        datasets: [{
+            label: 'Aylık İade Tutarı (₺)',
+            data: JSON.parse('{{ yearly_stats.aylik_istatistikler|map(attribute="iade_tutari")|list|tojson|safe }}'),
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

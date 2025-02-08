@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Yeni KDV İade Dosyası</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="firma_adi" class="form-label">Firma Adı</label>
+                            <input type="text" class="form-control" id="firma_adi" name="firma_adi" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="vergi_no" class="form-label">Vergi No</label>
+                            <input type="text" class="form-control" id="vergi_no" name="vergi_no" pattern="\d{10}" maxlength="10" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="donem" class="form-label">Dönem (YYYY/MM)</label>
+                            <input type="text" class="form-control" id="donem" name="donem" pattern="\d{4}/\d{2}" placeholder="2024/01" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="iade_turu" class="form-label">İade Türü</label>
+                            <select class="form-select" id="iade_turu" name="iade_turu" required>
+                                <option value="" selected disabled>Seçiniz...</option>
+                                <option value="İhracat - Tam İstisna">İhracat - Tam İstisna</option>
+                                <option value="İndirimli Oran">İndirimli Oran</option>
+                                <option value="Tevkifat">Tevkifat</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="iade_tutari" class="form-label">İade Tutarı</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control" id="iade_tutari" name="iade_tutari" required>
+                                <span class="input-group-text">TL</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="iade_sekli" class="form-label">İade Şekli</label>
+                            <select class="form-select" id="iade_sekli" name="iade_sekli" required>
+                                <option value="" selected disabled>Seçiniz...</option>
+                                <option value="Nakden">Nakden</option>
+                                <option value="Mahsuben">Mahsuben</option>
+                                <option value="Kısmen Nakden/Kısmen Mahsuben">Kısmen Nakden/Kısmen Mahsuben</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="teminat_mektubu" class="form-label">Teminat Mektubu</label>
+                            <select class="form-select" id="teminat_mektubu" name="teminat_mektubu" required>
+                                <option value="false">Hayır</option>
+                                <option value="true">Evet</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="on_kontrol_talebi" class="form-label">Ön Kontrol Talebi</label>
+                            <select class="form-select" id="on_kontrol_talebi" name="on_kontrol_talebi" required>
+                                <option value="false">Hayır</option>
+                                <option value="true">Evet</option>
+                            </select>
+                        </div>
+                        <div class="col-12 text-end border-top pt-3">
+                            <a href="{{ url_for('index') }}" class="btn btn-secondary me-2">Vazgeç</a>
+                            <button type="submit" class="btn btn-primary">Dosya Oluştur</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

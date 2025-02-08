@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning">
+                    <h3 class="mb-0">Dosyayı Arşive Kaldır</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="makbuz_tarihi" class="form-label">Serbest Meslek Makbuzu Tarihi</label>
+                            <input type="date" class="form-control" id="makbuz_tarihi" name="makbuz_tarihi" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="makbuz_no" class="form-label">Serbest Meslek Makbuzu No</label>
+                            <input type="text" class="form-control" id="makbuz_no" name="makbuz_no" required>
+                        </div>
+                        <div class="text-end">
+                            <a href="{{ url_for('dosya_detay', id=dosya.id) }}" class="btn btn-secondary me-2">İptal</a>
+                            <button type="submit" class="btn btn-warning">Arşive Kaldır</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

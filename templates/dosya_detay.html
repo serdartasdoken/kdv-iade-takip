@@ -1,0 +1,500 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Dosya Bilgileri</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th style="width: 40%">Firma Adı:</th>
+                                <td>{{ dosya.firma_adi }}</td>
+                            </tr>
+                            <tr>
+                                <th>Vergi No:</th>
+                                <td>{{ dosya.vergi_no }}</td>
+                            </tr>
+                            <tr>
+                                <th>Dönem:</th>
+                                <td>{{ dosya.donem }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-12 mb-4">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th style="width: 40%">İade Türü:</th>
+                                <td>{{ dosya.iade_turu }}</td>
+                            </tr>
+                            <tr>
+                                <th>İade Tutarı:</th>
+                                <td>{{ "{:,.2f}".format(dosya.iade_tutari) }} ₺</td>
+                            </tr>
+                            <tr>
+                                <th>Açılış Tarihi:</th>
+                                <td>{{ dosya.acilis_tarihi.strftime('%d.%m.%Y') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3>Eksiklik Bilgileri</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" class="mb-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-auto">
+                            <label for="eksiklik_yazisi" class="form-label">Yeni Eksiklik Yazısı</label>
+                            <input type="file" class="form-control" id="eksiklik_yazisi" name="eksiklik_yazisi" accept=".pdf" required>
+                        </div>
+
+                        <div class="col-auto">
+                            <button type="submit" class="btn btn-primary">Yükle</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th class="text-end" style="width: 10%">Kayıt Açılış Tarihi</th>
+                                <th class="text-start" style="width: 10%">Geçen Süre</th>
+                                <th class="text-start" style="width: 15%">Eksiklik Yazısı Cevaplandırma Tarihi</th>
+                                <th class="text-start" style="width: 25%">Dosya Adı</th>
+                                <th class="text-start" style="width: 15%">Yüklenme Tarihi</th>
+                                <th class="text-start" style="width: 15%">Yükleyen</th>
+                                <th class="text-start" style="width: 10%">İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for yazisi in dosya.eksiklik_yazilari|sort(attribute='sira_no') %}
+                            <tr>
+                                <td class="text-end">{{ yazisi.yuklenme_tarihi.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td class="text-start">{{ (now - yazisi.yuklenme_tarihi).days }} gün</td>
+                                <td>
+                                    <input type="date" class="form-control form-control-sm" name="cevaplandirma_tarihi_{{ yazisi.id }}" value="{{ yazisi.cevaplandirma_tarihi.strftime('%Y-%m-%d') if yazisi.cevaplandirma_tarihi else '' }}" onchange="updateCevaplandirmaTarihi({{ yazisi.id }}, this.value)">
+                                </td>
+                                <td class="text-start">{{ yazisi.dosya_adi }}</td>
+                                <td class="text-start">{{ yazisi.yuklenme_tarihi.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td class="text-start">{{ yazisi.user.username }}</td>
+                                <td>
+                                    <div class="btn-group" style="gap: 5px;">
+                                        <a href="{{ url_for('eksiklik_yazisi_indir', id=yazisi.id) }}" class="btn btn-sm btn-info">İndir</a>
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="silEksiklikYazisi({{ yazisi.id }})">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3>Kontrol Raporları</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" class="mb-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-8">
+                            <label for="kontrol_raporu" class="form-label">Yeni Rapor Yükle</label>
+                            <input type="file" class="form-control" id="kontrol_raporu" name="kontrol_raporu" accept=".pdf" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary">Yükle</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Dosya Adı</th>
+                                <th>Yükleyen</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rapor in kontrol_raporlari %}
+                            <tr>
+                                <td>{{ rapor.yuklenme_tarihi.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td>{{ rapor.dosya_adi }}</td>
+
+                                <td>{{ rapor.user.username }}</td>
+                                <td>
+                                    <div class="btn-group" style="gap: 5px;">
+                                        <a href="{{ url_for('kontrol_raporu_indir', id=rapor.id) }}" class="btn btn-sm btn-info">İndir</a>
+                                        <form action="{{ url_for('kontrol_raporu_sil', id=rapor.id) }}" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bu kontrol raporunu silmek istediğinizden emin misiniz?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onay durumları için form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Onay Durumları</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <label for="iade_listesi_onay" class="form-label">İade Listesi Onay</label>
+                            <select class="form-select" id="iade_listesi_onay" name="iade_listesi_onay">
+                                <option value="true" {% if dosya.iade_listesi_onay %}selected{% endif %}>Evet</option>
+                                <option value="false" {% if not dosya.iade_listesi_onay %}selected{% endif %}>Hayır</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-4">
+                            <label for="rapor_onay" class="form-label">Rapor Onay</label>
+                            <select class="form-select" id="rapor_onay" name="rapor_onay">
+                                <option value="true" {% if dosya.rapor_onay %}selected{% endif %}>Evet</option>
+                                <option value="false" {% if not dosya.rapor_onay %}selected{% endif %}>Hayır</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Onay Durumlarını Güncelle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Durum Güncelleme</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="d-flex flex-column gap-2">
+                    <div class="row">
+                        <div class="col-12 mb-4">
+                            <select name="durum" class="form-select">
+                                {% for durum in durum_secenekleri %}
+                                <option value="{{ durum }}" {% if durum == dosya.durum %}selected{% endif %}>{{ durum }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12 mb-4">
+                            <button type="submit" class="btn btn-primary">Durumu Güncelle</button>
+                        </div>
+                    </div>
+                    <div class="form-group mt-2">
+                        <textarea name="aciklama" class="form-control" rows="2" placeholder="Durum açıklaması (isteğe bağlı)"></textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tarih güncellemeleri için yeni kart -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h3>Tarih Bilgileri</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row g-3">
+
+                        <div class="col-12 mb-4">
+                            <label class="form-label">İade Listeleri Geliş Tarihi:</label>
+                            <input type="date" name="karsit_liste_tarihi" class="form-control"
+                                value="{{ dosya.karsit_liste_tarihi.strftime('%Y-%m-%d') if dosya.karsit_liste_tarihi else '' }}">
+                        </div>
+                        <div class="col-12 mb-4">
+                            <label class="form-label">Rapor Teslim Tarihi:</label>
+                            <input type="date" name="rapor_teslim_tarihi" class="form-control"
+                                value="{{ dosya.rapor_teslim_tarihi.strftime('%Y-%m-%d') if dosya.rapor_teslim_tarihi else '' }}">
+                        </div>
+                        <div class="col-12 mb-4">
+                            <label class="form-label">İade Talep Tarihi:</label>
+                            <input type="date" name="iade_talep_tarihi" class="form-control"
+                                value="{{ dosya.iade_talep_tarihi.strftime('%Y-%m-%d') if dosya.iade_talep_tarihi else '' }}">
+                        </div>
+                        <div class="col-12 mb-4">
+                            <label class="form-label">Rapor Ekleri Teslim Tarihi:</label>
+                            <input type="date" name="rapor_ekleri_tarihi" class="form-control"
+                                value="{{ dosya.rapor_ekleri_tarihi.strftime('%Y-%m-%d') if dosya.rapor_ekleri_tarihi else '' }}">
+                        </div>
+                    </div>
+
+
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">Tarihleri Güncelle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Karşıtlar Kartı -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3>Karşıtlar</h3>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#yeniKarsitModal">
+                    <i class="bi bi-plus-circle me-1"></i>Yeni Karşıt
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Kayıt Açılış Tarihi</th>
+                                <th>Geçen Süre</th>
+                                <th>Alt Firma Sırası</th>
+                                <th>Alt Firma Unvanı</th>
+                                <th>Telefon No.</th>
+                                <th>E-Posta</th>
+                                <th>İlgili Kişi</th>
+                                <th>Açıklama</th>
+                                <th>Karşıt Durumu</th>
+                                <th>Sonraki Karşıt Dikkat</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for karsit in dosya.karsitlar %}
+                            <tr>
+                                <td>{{ karsit.kayit_acilis_tarihi.strftime('%d.%m.%Y') }}</td>
+                                <td>{{ (now - karsit.kayit_acilis_tarihi).days }} gün</td>
+                                <td>{{ karsit.alt_firma_sirasi }}</td>
+                                <td>{{ karsit.alt_firma_unvani }}</td>
+                                <td>{{ karsit.telefon }}</td>
+                                <td>{{ karsit.email }}</td>
+                                <td>{{ karsit.ilgili_kisi }}</td>
+                                <td>{{ karsit.aciklama }}</td>
+                                <td>
+                                    <span class="badge {% if karsit.karsit_durumu == 'Geldi' %}bg-success{% else %}bg-warning{% endif %}">
+                                        {{ karsit.karsit_durumu }}
+                                    </span>
+                                </td>
+                                <td>{{ karsit.sonraki_karsit_dikkat }}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-primary" 
+                                                onclick="karsitDuzenle({{ karsit.id }}, '{{ karsit.alt_firma_unvani }}', {{ karsit.alt_firma_sirasi }}, 
+                                                                    '{{ karsit.telefon }}', '{{ karsit.email }}', '{{ karsit.ilgili_kisi }}', 
+                                                                    '{{ karsit.aciklama }}', '{{ karsit.karsit_durumu }}', '{{ karsit.sonraki_karsit_dikkat }}')">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form action="{{ url_for('karsit_sil', id=karsit.id) }}" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bu karşıtı silmek istediğinizden emin misiniz?')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not dosya.karsitlar %}
+                            <tr>
+                                <td colspan="11" class="text-center text-muted">Henüz karşıt bulunmamaktadır.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h3>İşlem Geçmişi</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 20%" class="text-center">Tarih</th>
+                                <th style="width: 30%" class="text-start">İşlem</th>
+                                <th style="width: 35%" class="text-start">Açıklama</th>
+                                <th style="width: 15%" class="text-start">Kullanıcı</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for hareket in hareketler %}
+                            <tr>
+                                <td class="text-center">{{ hareket.islem_tarihi.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td class="text-start">{{ hareket.islem }}</td>
+                                <td class="text-start">{{ hareket.aciklama }}</td>
+                                <td class="text-start">{{ hareket.user.username }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if not hareketler %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Henüz işlem geçmişi bulunmamaktadır.</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yeni Karşıt Modal -->
+<div class="modal fade" id="yeniKarsitModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Yeni Karşıt Ekle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('karsit_ekle', dosya_id=dosya.id) }}" method="POST">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Alt Firma Sırası</label>
+                            <select name="alt_firma_sirasi" class="form-select" required>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Alt Firma Unvanı</label>
+                            <input type="text" name="alt_firma_unvani" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Telefon No.</label>
+                            <input type="tel" name="telefon" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">E-Posta</label>
+                            <input type="email" name="email" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">İlgili Kişi</label>
+                            <input type="text" name="ilgili_kisi" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Karşıt Durumu</label>
+                            <select name="karsit_durumu" class="form-select" required>
+                                <option value="Geldi">Geldi</option>
+                                <option value="Gelmedi" selected>Gelmedi</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Açıklama</label>
+                            <textarea name="aciklama" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Sonraki Karşıt Dikkat</label>
+                            <textarea name="sonraki_karsit_dikkat" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Karşıt Düzenleme Modal -->
+<div class="modal fade" id="duzenleKarsitModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Karşıt Düzenle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="karsitDuzenleForm" method="POST">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Alt Firma Sırası</label>
+                            <select name="alt_firma_sirasi" class="form-select" required>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Alt Firma Unvanı</label>
+                            <input type="text" name="alt_firma_unvani" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Telefon No.</label>
+                            <input type="tel" name="telefon" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">E-Posta</label>
+                            <input type="email" name="email" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">İlgili Kişi</label>
+                            <input type="text" name="ilgili_kisi" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Karşıt Durumu</label>
+                            <select name="karsit_durumu" class="form-select" required>
+                                <option value="Geldi">Geldi</option>
+                                <option value="Gelmedi">Gelmedi</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Açıklama</label>
+                            <textarea name="aciklama" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Sonraki Karşıt Dikkat</label>
+                            <textarea name="sonraki_karsit_dikkat" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function karsitDuzenle(id, unvan, sira, telefon, email, ilgiliKisi, aciklama, durum, dikkat) {
+    const form = document.getElementById('karsitDuzenleForm');
+    form.action = `/karsit/duzenle/${id}`;
+    
+    form.querySelector('[name="alt_firma_unvani"]').value = unvan;
+    form.querySelector('[name="alt_firma_sirasi"]').value = sira;
+    form.querySelector('[name="telefon"]').value = telefon;
+    form.querySelector('[name="email"]').value = email;
+    form.querySelector('[name="ilgili_kisi"]').value = ilgiliKisi;
+    form.querySelector('[name="aciklama"]').value = aciklama;
+    form.querySelector('[name="karsit_durumu"]').value = durum;
+    form.querySelector('[name="sonraki_karsit_dikkat"]').value = dikkat;
+    
+    new bootstrap.Modal(document.getElementById('duzenleKarsitModal')).show();
+}
+</script>
+{% endblock %}
