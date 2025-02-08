@@ -179,8 +179,10 @@ def calculate_monthly_stats(year, month):
         ).count(),
         'ortalama_sure': db.session.query(
             func.avg(
-                # PostgreSQL için date_part kullanıyoruz
-                func.date_part('day', Dosya.son_islem_tarihi - Dosya.acilis_tarihi)
+                # Veritabanı tipine göre uygun fonksiyonu kullan
+                func.extract('epoch', Dosya.son_islem_tarihi - Dosya.acilis_tarihi) / 86400 \
+                if str(db.engine.url).startswith('postgresql') \
+                else (func.julianday(Dosya.son_islem_tarihi) - func.julianday(Dosya.acilis_tarihi))
             )
         ).filter(
             Dosya.acilis_tarihi >= start_date,
