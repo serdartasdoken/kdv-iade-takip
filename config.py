@@ -7,16 +7,21 @@ class Config:
     basedir = os.path.abspath(os.path.dirname(__file__))
     
     # Flask
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'gizli-anahtar-buraya')
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'default-secret-key')
     
-    # Database - PostgreSQL için
-    DATABASE_URL = os.environ.get('DATABASE_URL')
-    if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
-        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    # Database
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///kdv_iade.db')
+    if SQLALCHEMY_DATABASE_URI and SQLALCHEMY_DATABASE_URI.startswith('postgres://'):
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace('postgres://', 'postgresql://', 1)
     
-    SQLALCHEMY_DATABASE_URI = DATABASE_URL or 'sqlite:///kdv_iade.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # File Upload
     UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    
+    # AWS S3
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_REGION = os.environ.get('AWS_REGION')
+    S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME')

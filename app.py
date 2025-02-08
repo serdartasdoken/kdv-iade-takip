@@ -8,13 +8,15 @@ from datetime import datetime
 from datetime import timedelta
 from sqlalchemy import inspect, text, func, extract
 from collections import defaultdict
-
-def get_tr_time():
-    return datetime.utcnow() + timedelta(hours=3)
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
 from config import Config
+import boto3
+from botocore.exceptions import ClientError
+
+def get_tr_time():
+    return datetime.utcnow() + timedelta(hours=3)
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -702,6 +704,22 @@ def kontrol_raporu_sil(id):
     
     flash('Kontrol raporu silindi')
     return redirect(url_for('dosya_detay', id=dosya_id))
+
+def upload_file_to_s3(file, bucket_name, object_name=None):
+    if object_name is None:
+        object_name = file.filename
+        
+    s3_client = boto3.client('s3',
+        aws_access_key_id=app.config['AWS_ACCESS_KEY_ID'],
+        aws_secret_access_key=app.config['AWS_SECRET_ACCESS_KEY'],
+        region_name=app.config['AWS_REGION']
+    )
+    try:
+        s3_client.upload_fileobj(file, bucket_name, object_name)
+        return True
+    except ClientError as e:
+        print(f"Error uploading file: {e}")
+        return False
 
 if __name__ == '__main__':
     import os
