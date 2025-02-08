@@ -1,0 +1,5 @@
+<td>
+    {% if current_user.id == user.id %}
+        <a href="{{ url_for('change_password') }}" class="btn btn-warning btn-sm">Şifre Değiştir</a>
+    {% endif %}
+</td> 

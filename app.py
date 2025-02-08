@@ -721,6 +721,33 @@ def upload_file_to_s3(file, bucket_name, object_name=None):
         print(f"Error uploading file: {e}")
         return False
 
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        # Mevcut şifreyi kontrol et
+        if not current_user.check_password(current_password):
+            flash('Mevcut şifre yanlış!', 'danger')
+            return redirect(url_for('change_password'))
+        
+        # Yeni şifrelerin eşleştiğini kontrol et
+        if new_password != confirm_password:
+            flash('Yeni şifreler eşleşmiyor!', 'danger')
+            return redirect(url_for('change_password'))
+        
+        # Şifreyi güncelle
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        flash('Şifreniz başarıyla değiştirildi!', 'success')
+        return redirect(url_for('index'))
+    
+    return render_template('change_password.html')
+
 if __name__ == '__main__':
     import os
     
